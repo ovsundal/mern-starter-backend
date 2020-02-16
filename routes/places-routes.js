@@ -22,15 +22,27 @@ router.get('/:pid', (req, res, next) => {
         return p.id === placeId;
     });
 
-    res.json({place});
+    if(!place) {
+        const error = new Error('Could not find a place for the provided id.');
+        error.code = 404;
+        throw error;
+    }
+
+    return res.json({place});
 });
 
 
-router.get('/users/:userId', (req, res, next) => {
+router.get('/user/:userId', (req, res, next) => {
     const userId = req.params.userId;
     const place = DUMMY_PLACES.find(p => {
         return p.creator === userId;
     });
+
+    if(!place) {
+        const error = new Error('Could not find a place for the provided user id.');
+        error.code = 404;
+        return next(error);
+    }
 
     res.json({place});
 });
