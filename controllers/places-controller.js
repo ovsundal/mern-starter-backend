@@ -2,6 +2,7 @@ const HttpError = require('../models/http-error');
 const uuid = require('uuid/v4');
 const {validationResult} = require('express-validator');
 const getCoordsForAddress = require('../util/location');
+const Place = require('../models/place');
 
 let DUMMY_PLACES = [
     {
@@ -18,17 +19,26 @@ let DUMMY_PLACES = [
 ];
 
 
-const getPlaceById = (req, res, next) => {
+const getPlaceById = async (req, res, next) => {
     const placeId = req.params.pid;
-    const place = DUMMY_PLACES.find(p => {
-        return p.id === placeId;
-    });
 
-    if(!place) {
-        throw new HttpError('Could not find a place for the provided id.', 404);
+    let place;
+    try {
+        place = await Place.findById(placeId).exec();
+
+    } catch (e) {
+        const error = new HttpError(
+            'Something went wrong, could not find a place', 500
+        );
+        return next(error);
     }
 
-    return res.json({place});
+    if(!place) {
+        const error = new HttpError('Could not find a place for the provided id.', 404);
+        return next(error);
+    }
+
+    res.json({place: place.toObject({getters: true})});
 };
 
 const getPlacesByUserId = (req, res, next) => {
@@ -62,16 +72,26 @@ const createPlace = async (req, res, next) => {
         return next(error);
     }
 
-    const createdPlace = {
-        id: uuid(),
-        title,
-        description,
-        location: coordinates,
-        address,
+    const createdPlace = new Place({
+       title,
+       description,
+       address,
+       location: coordinates,
+       image: 'https://via.placeholder.com/300/09f/fff.png\n' +
+           '\n' +
+           'C/O https://placeholder.com/ ',
         creator
-    };
+    });
 
-    DUMMY_PLACES.push(createdPlace);
+    try {
+        await createdPlace.save();
+    } catch (e) {
+        const error = new HttpError(
+            'Creating place failed, please try again',
+            500
+        );
+        return next(error);
+    }
 
     res.status(201).json({place: createdPlace});
 };
