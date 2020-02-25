@@ -10,7 +10,7 @@ const getPlaceById = async (req, res, next) => {
 
     let place;
     try {
-        place = await Place.findById(placeId).exec();
+        place = await Place.findById(placeId).populate('creator');
 
     } catch (e) {
         const error = new HttpError(
@@ -118,6 +118,7 @@ const updatePlace = async (req, res, next) => {
     if(!errors.isEmpty()) {
         return next(new HttpError('Invalid inputs passed, please check your data.', 422));
     }
+console.log('in update');
 
     const {title, description} = req.body;
     const placeId = req.params.pid;
@@ -145,18 +146,24 @@ const updatePlace = async (req, res, next) => {
 
 const deletePlace = async (req, res, next) => {
     const placeId = req.params.pid;
+    let place;
 
     try {
-        place = await Place.findById(placeId);
+        place = await Place.findById(placeId).populate('creator');
     }catch (e) {
-        const error = new HttpError('Something went wrong, could not update place.', 500);
+        const error = new HttpError('Something went wrong, could not delete place.', 500);
         return next(error);
     }
 
     try {
-        await place.remove();
+        const sess = await mongoose.startSession();
+        sess.startTransaction();
+        await place.remove({session: sess});
+        place.creator.places.pull(place);
+        await place.creator.save({session: sess});
+        await sess.commitTransaction();
     }catch (e) {
-        const error = new HttpError('Something went wrong, could not update place.', 500);
+        const error = new HttpError('Something went wrong, could not delete place.', 500);
         return next(error);
     }
 
