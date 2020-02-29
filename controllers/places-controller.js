@@ -33,7 +33,7 @@ const getPlaceById = async (req, res, next) => {
 };
 
 const getPlacesByUserId = async (req, res, next) => {
-    const userId = req.params.uid;
+    const userId = req.params.userId;
 
     // let places;
     let userWithPlaces;
