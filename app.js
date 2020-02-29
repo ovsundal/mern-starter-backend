@@ -36,7 +36,7 @@ app.use((error, req, res, next) => {
 });
 
 mongoose
-    .connect('mongodb+srv://ove:<password>@cluster0-tz9dz.azure.mongodb.net/mern?retryWrites=true&w=majority')
+    .connect('mongodb+srv://ove:pW2vtJfzc5X8AGyW@cluster0-tz9dz.azure.mongodb.net/places?retryWrites=true&w=majority')
     .then(() => app.listen(5000))
     .catch((err => {
         console.log(err);
